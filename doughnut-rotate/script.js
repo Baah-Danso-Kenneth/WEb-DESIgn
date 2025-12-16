@@ -1,288 +1,234 @@
-import gsap from "gsap";
-import {CustomEase} from 'gsap/all'
-import SplitType from 'split-type'
-import {projectsData} from './projects.js'
+import gsap from 'gsap';
 
-gsap.registerPlugin(CustomEase);
-CustomEase.create("hop", "0.9, 0, 0.1,1");
+const widgets = [
+    { image: "/widget_1.jpg", name: "Velvet" },
+    { image: "/widget_2.jpg", name: "Glass Relay" },
+    { image: "/widget_3.jpg", name: "Noir-17" },
+    { image: "/widget_4.jpg", name: "Driftline" },
+    { image: "/widget_5.jpg", name: "Pulse 9" },
+    { image: "/widget_6.jpg", name: "Cold Meridian" },
+    { image: "/widget_7.jpg", name: "Astra" },
+    { image: "/widget_8.jpg", name: "Mono Circuit" },
+    { image: "/widget_9.jpg", name: "Lunen-04" },
+    { image: "/widget_10.jpg", name: "Shadow Bloom" },
+]
 
 
-document.addEventListener("DOMContentLoaded", ()=>{
-    const projectsContainer = document.querySelector(".projects");
-    const locationContainer = document.querySelector(".locations");
-    const gridImages = document.querySelectorAll(".img");
-    const heroImage = document.querySelector(".img.hero-img");
+const lerp = (a, b, t) => a + (b - a) * t;
 
-    const images = Array.from(gridImages).filter((img)=> img !== heroImage);
-
-    const introCopy = new SplitType(".intro-copy h3", {
-        types: "words",
-        absolute: false
-    });
-
-    const titleHeading = new SplitType(".title h1", {
-        types: "words",
-        absolute: false
-    });
-
-    const allImageSources = Array.from(
-        {length: 35},
-        (_,i)=> `/images/img${i + 1}.jpeg`
+const createSVG = (type, attrs = {}) => {
+    const svgElement = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        type
     );
 
-    const getRandomImageSet=()=>{
-        const shuffled = [...allImageSources].sort(()=>0.5 - Math.random());
-        return shuffled.slice(0,9);
-    };
-
-    function initializeDynamicContent(){
-        projectsData.forEach((project)=>{
-            const projectItem = document.createElement("div");
-            projectItem.className = "project-item";
-
-            const projectName = document.createElement("p");
-            projectName.textContent = project.name;
-
-            const directorName = document.createElement("p");
-            directorName.textContent = project.director;
+    Object.entries(attrs).forEach(([k, v]) => svgElement.setAttribute(k, v));
+    return svgElement;
+}
 
 
-            projectItem.appendChild(projectName);
-            projectItem.appendChild(directorName);
+let svg, centerX, centerY, outerRadius;
+let currentIndicatorRotation = 0;
+let targetIndicatorRotation = 0;
+let currentSpinnerRotation = 0;
+let targetSpinnerRotation = 0;
+let lastTime = performance.now();
+let lastSegmentIndex = -1;
 
-            projectsContainer.appendChild(projectItem);
+
+const createWidgetSpinner = () => {
+    const container = document.querySelector(".widgets");
+    const viewportSize = Math.min(window.innerWidth, window.innerHeight)
+
+    outerRadius = viewportSize * 0.4;
+    const innerRadius = viewportSize * 0.25;
+    centerX = window.innerWidth / 2;
+    centerY = window.innerHeight / 2;
+
+    svg = createSVG("svg", { id: "widget-svg" });
+    const defs = createSVG("defs")
+
+    svg.appendChild(defs)
+
+    const anglePerSegment = (2 * Math.PI) / widgets.length;
+
+    for (let i = 0; i < widgets.length; i++) {
+        const startAngle = i * anglePerSegment - Math.PI / 2;
+        const endAngle = (i + 1) * anglePerSegment - Math.PI / 2;
+        const midAngle = (startAngle + endAngle) / 2;
+
+        const clipPath = createSVG("clipPath", { id: `clip-${i}` });
+
+        const path = `M ${centerX + outerRadius * Math.cos(startAngle)} ${centerY + outerRadius * Math.sin(startAngle)
+            } A ${outerRadius} ${outerRadius} 0 0 1 ${centerX + outerRadius * Math.cos(endAngle)
+            } ${centerY + outerRadius * Math.sin(endAngle)} L ${centerX + innerRadius * Math.cos(endAngle)} ${centerY + innerRadius * Math.sin(endAngle)} A ${innerRadius} ${innerRadius} 0 0 0 ${centerX + innerRadius * Math.cos(startAngle)} 
+            ${centerY + innerRadius * Math.sin(startAngle)} Z`;
+
+        clipPath.appendChild(createSVG("path", { d: path }));
+        defs.appendChild(clipPath);
+
+        const g = createSVG("g", {
+            "clip-path": `url(#clip-${i})`,
+            "data-segment": i,
+            class: "spinner-segment"
         });
 
+        const segmentRadius = (innerRadius + outerRadius) / 2;
+        const segmentX = centerX + Math.cos(midAngle) * segmentRadius;
+        const segmentY = centerY + Math.sin(midAngle) * segmentRadius;
 
-        projectsData.forEach((project)=>{
-            const locationItem = document.createElement("div");
-            locationItem.className = "location-name";
+        const arcLength = outerRadius * anglePerSegment;
+        const imgWidth = arcLength * 1.25;
+        const innerHeight = (outerRadius - innerRadius) * 1.25;
+        const rotation = (midAngle * 180) / Math.PI + 90;
 
-            const locationName = document.createElement("p");
-            locationName.textContent = project.location;
-
-            locationItem.appendChild(locationName);
-            locationContainer.appendChild(locationItem);
+        const img = createSVG("image", {
+            href: widgets[i].image,
+            width: imgWidth,
+            height: innerHeight,
+            x: segmentX - imgWidth / 2,
+            y: segmentY - innerHeight / 2,
+            preserveAspectRatio: "xMidYMid slice",
+            transform: `rotate(${rotation} ${segmentX} ${segmentY})`,
         });
+
+        g.appendChild(img);
+        svg.appendChild(g)
     }
 
+    container.appendChild(svg);
+};
 
-function startImageRotation(){
-    const totalCycles = 20;
 
-    for(let cycle=0; cycle < totalCycles; cycle++) {
-        const randomImages = getRandomImageSet();
+createWidgetSpinner();
 
-        gsap.to({}, {
-            duration: 0,
-            delay: cycle * 0.15,
-            onComplete:()=>{
-                gridImages.forEach((img, index)=>{
-                    const imgElement = img.querySelector("img");
 
-                    if(cycle === totalCycles -1 && img === heroImage) {
-                        imgElement.src="/images/task2.jpg";
-                        gsap.set(".hero-img img", {scale: 2});
-                    }else if(randomImages[index]) { 
-                        imgElement.src = randomImages[index];
-                    }
-                });
-            },
-        })
+const updateContent = () => {
+    const relativeRotation = (((currentIndicatorRotation - currentSpinnerRotation) % 360) + 360) % 360;
+    const segmentIndex = Math.floor((relativeRotation / 360) * widgets.length);
+
+    if (segmentIndex !== lastSegmentIndex) {
+        lastSegmentIndex = segmentIndex;
+        document.querySelector('.widget-title').textContent = widgets[segmentIndex].name;
+
+        const previewContainer = document.querySelector('.widget-preview-img');
+
+        const img = document.createElement('img');
+        img.src = widgets[segmentIndex].image;
+        img.alt = widgets[segmentIndex].name;
+
+        gsap.set(img, { opacity: 0 });
+        previewContainer.appendChild(img);
+        gsap.to(img, { opacity: 1, duration: 0.5, ease: "power2.out" });
+
+        const allImages = previewContainer.querySelectorAll('img');
+
+        if (allImages.length > 3) {
+            for (let i = 0; i < allImages.length - 2; i++) {
+                previewContainer.removeChild(allImages[i]);
+            }
+        }
     }
 }
 
 
-    function setUpInitialStates(){
-        gsap.set("nav",{
-            y: "-125%",
-        });
+let indicatorElement;
+let segmentElements = [];
 
-        gsap.set(introCopy.words, {
-            y: "110%",
-        });
+const animate = () => {
+    if (!indicatorElement) {
+        indicatorElement = document.getElementById("widget-indicator");
+        segmentElements = svg.querySelectorAll("[data-segment]");
+    }
+    const currentTime = performance.now();
+    let deltaTime = (currentTime - lastTime) / 1000;
+    lastTime = currentTime;
+    deltaTime = Math.min(deltaTime, 0.1);
 
-        gsap.set(titleHeading.words, {
-            y: "110%",
-        })
-    };
+    targetIndicatorRotation += 18 * deltaTime;
+    targetSpinnerRotation -= 18 * 0.25 * deltaTime;
 
-    function init(){
-        initializeDynamicContent();
-        setUpInitialStates();
-        createAnimationTimelines();
+    currentIndicatorRotation = lerp(
+        currentIndicatorRotation,
+        targetIndicatorRotation,
+        0.1
+    );
+
+    currentSpinnerRotation = lerp(
+        currentSpinnerRotation,
+        targetSpinnerRotation,
+        0.1
+    );
+
+
+    if (indicatorElement) {
+        indicatorElement.setAttribute(
+            "transform",
+            `rotate(${currentIndicatorRotation % 360} ${centerX} ${centerY})`
+        );
     }
 
-    init();
-
-    function createAnimationTimelines() {
-        const overlayTimeline = gsap.timeline();
-        const imagesTimeline = gsap.timeline();
-        const textTimeline = gsap.timeline();
-
-        overlayTimeline.to(".logo-line-1",{
-            backgroundPosition: "0% 0%",
-            color: "#fff",
-            duration: 1,
-            ease: "none",
-            delay:0.5,
-            onComplete: ()=>{
-                gsap.to(".logo-line-2", {
-                    backgroundPosition: "0% 0%",
-                    color: "#fff",
-                    duration: 1,
-                    ease: "none",
-                });
-            }
-        });
-
-
-        overlayTimeline.to([".projects-header", ".project-item"], {
-        opacity:1,
-        duration: 0.15,
-        stagger: 0.075,
-        delay: 1,
+    segmentElements.forEach((seg) => {
+        seg.setAttribute(
+            "transform",
+            `rotate(${currentSpinnerRotation % 360} ${centerX} ${centerY})`
+        )
     });
 
+    updateContent();
 
+    requestAnimationFrame(animate);
 
-        overlayTimeline.to([".locations-header", ".location-item"],{
-            opacity: 1,
-            duration: 0.15,
-            stagger: 0.075,
-        },
-        "<"
-    );
+};
 
 
 
-    overlayTimeline.to(".project-item", {
-        color: "#fff",
-        duration: 0.15,
-        stagger: 0.075,
-    });
 
 
-    overlayTimeline.to( ".location-item",
-         {
-        color: "#fff",
-        duration: 0.15,
-        stagger: 0.075,
-    },
-    "<"
-    );
-
-
-    overlayTimeline.to([".projects-header", ".project-item"], {
-        opacity:0,
-        duration: 0.15,
-        stagger: 0.075,
-    });
-
-
-    overlayTimeline.to([".locations-header", ".location-item"], {
-        opacity:1,
-        duration: 0.15,
-        stagger: 0.075,
-    },
-    "<" 
-    );
-
-    overlayTimeline.to(".overlay",{
-        opacity:0,
-        duration:0.5,
-        delay:1.5,
-    });
-
-    imagesTimeline.to(".img",{
-        clipPath: "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)",
-        duration: 1,
-        delay:2.5,
-        stagger:0.05,
-        ease: "hop",
-        onStart: ()=>{
-            setTimeout(()=>{
-                startImageRotation();
-                gsap.to(".loader",{opacity:0, duration:0.3});
-            },1000);
-        }
-    });
-
-
-    imagesTimeline.to(images,{
-        clipPath: "polygon(0% 0%, 100% 0%, 100% 0%, 0% 0%)",
-        duration: 1,
-        delay: 2.5,
-        stagger:0.05,
-        ease: "hop",
-    });
-
-    imagesTimeline.to(".hero-img", {
-        y: -50,
-        duration: 1,
-        ease: "hop",
-    });
-
-    imagesTimeline.to(".hero-img", {
-        scale:4,
-        clipPath: "polygon(20% 10%, 80% 10%, 80% 90%, 20% 90%)",
-        duration: 1.5,
-        ease: "hop",
-        onStart:()=>{
-            gsap.to(".hero-img img", {
-                scale: 1,
-                duration: 1.5,
-                ease: "hop",
-            });
-
-            gsap.to(".banner-img",{scale: 1, delay: 0.5, duration:0.5});
-            gsap.to("nav", {y: "0%", duration:1, ease: "hop", delay: 0.25});
-        }
-    });
-    
-    imagesTimeline.to(
-        ".banner-img-1",
-        {
-            left:"40%",
-            rotate: -20,
-            duration: 1.5,
-            delay: 0.5,
-            ease: "hop",
-        },
-        "<"
-        );
-
-
-    imagesTimeline.to(
-        ".banner-img-2",
-        {
-            left:"60%",
-            rotate: 20,
-            duration: 1.5,
-            delay: 0.5,
-            ease: "hop",
-        },
-        "<"
-        );
-
-    textTimeline.to(titleHeading.words, {
-        y: "0%",
-        duration: 1,
-        stagger: 0.1,
-        delay: 9.5,
-        ease: "power3.out"
-    });
-
-    textTimeline.to(introCopy.words, {
-        y: "0%",
-        duration: 1,
-        stagger: 0.1,
-        delay: 0.25,
-        ease: "power3.out"
-    },
-    "<"
-    );
-    
-    };
-
+const innerRadius = outerRadius * 0.625;
+const widgetIndicator = createSVG("line", {
+    id: "widget-indicator",
+    x1: centerX,
+    y1: centerY - innerRadius,
+    x2: centerX,
+    y2: centerY - outerRadius * 1.15
 });
+
+
+svg.appendChild(widgetIndicator);
+
+animate();
+
+
+window.addEventListener(
+    "wheel",
+    (e) => {
+        e.preventDefault();
+        const delta = e.deltaY * 0.05;
+        targetIndicatorRotation += delta;
+        targetSpinnerRotation -= delta;
+    },
+
+    { passive: false }
+);
+
+
+window.addEventListener("resize", () => {
+    if (svg) svg.remove();
+    createWidgetSpinner();
+
+
+    const innerRadius = outerRadius * 0.625;
+
+    const widgetIndicator = createSVG("line", {
+        id: "widget-indicator",
+        x1: centerX,
+        y1: centerY - innerRadius,
+        x2: centerX,
+        y2: centerY - outerRadius * 1.15,
+    });
+
+    svg.appendChild(widgetIndicator);
+    indicatorElement = null;
+    segmentElements = [];
+})
