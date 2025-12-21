@@ -1,159 +1,168 @@
-const config = {
-    symbols: ["O", "X", "*", ">", "$", "W"],
-    blockSize: 25,
-    detectionRadius: 50,
-    clusterSize: 7,
-    blockLifetime: 300,
-    emptyRatio: 0.3,
-    scrambleRatio: 0.25,
-    scrambleInterval: 150,
-};
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import Lenis from '@studio-freight/lenis';
 
+gsap.registerPlugin(ScrollTrigger);
 
-function getRandomSymbol() {
-    return config.symbols[Math.floor(Math.random() * config.symbols.length)];
-}
-
-function initGridOverlay(element) {
-    const gridOverlay = document.createElement("div");
-    gridOverlay.className = "grid-overlay"
-
-    const width = element.offsetWidth;
-    const height = element.offsetHeight;
-    const cols = Math.ceil(width / config.blockSize);
-    const rows = Math.ceil(height / config.blockSize);
-
-    const blocks = [];
-
-    for (let row = 0; row < rows; row++) {
-        for (let col = 0; col < cols; col++) {
-            const block = document.createElement("div")
-            block.className = "grid-block"
-
-            const isEmpty = Math.random() < config.emptyRatio;
-            block.textContent = isEmpty ? "" : getRandomSymbol();
-
-            block.style.width = `${config.blockSize}px`;
-            block.style.height = `${config.blockSize}px`;
-            block.style.left = `${col * config.blockSize}px`;
-            block.style.top = `${row * config.blockSize}px`;
-
-
-            gridOverlay.appendChild(block);
-
-            blocks.push({
-                element: block,
-                x: col * config.blockSize + config.blockSize / 2,
-                y: row * config.blockSize + config.blockSize / 2,
-                gridX: col,
-                gridY: row,
-                isEmpty: isEmpty,
-                shouldScramble: !isEmpty && Math.random() < config.scrambleRatio,
-                scrambleInterval: null,
-            })
-        }
-    }
-
-    element.appendChild(gridOverlay);
-
-    element.addEventListener("mousemove", (e) => {
-        const rect = element.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
-
-        let closestBlock = null;
-        let closestDistance = Infinity;
-
-        for (const block of blocks) {
-            const dx = block.x - mouseX;
-            const dy = block.y - mouseY;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-
-            if (distance < closestDistance) {
-                closestDistance = distance;
-                closestBlock = block;
-            }
-        }
-
-        if (!closestBlock || closestDistance > config.detectionRadius) return;
-
-        const currentTime = Date.now();
-        closestBlock.element.classList.add("active")
-        closestBlock.highlightEndTime = currentTime + config.blockLifetime;
-
-
-        if (closestBlock.shouldScramble && !closestBlock.scrambleInterval) {
-            closestBlock.scrambleInterval = setInterval(() => {
-                closestBlock.element.textContent = getRandomSymbol();
-            }, config.scrambleInterval);
-        }
-
-        const clusterCount = Math.floor(Math.random() * config.clusterSize) + 1;
-        let currentBlock = closestBlock;
-        let activeBlocks = [closestBlock];
-
-        for (let i = 0; i < clusterCount; i++) {
-            const neighbors = blocks.filter((neighbor) => {
-                if (activeBlocks.includes(neighbor)) return false;
-
-                const dx = Math.abs(neighbor.gridX - currentBlock.gridX);
-                const dy = Math.abs(neighbor.gridY - currentBlock.gridY);
-
-                return dx <= 1 && dy <= 1;
-            });
-
-            if (neighbors.length === 0) break;
-
-            const randomNeighbor = neighbors[Math.floor(Math.random() * neighbors.length)];
-            randomNeighbor.element.classList.add("active");
-
-            randomNeighbor.element.classList.add("active");
-            randomNeighbor.highlightEndTime = currentTime + config.blockLifetime + i * 10;
-
-
-            if (randomNeighbor.shouldScramble && !randomNeighbor.scrambleInterval) {
-                randomNeighbor.scrambleInterval = setInterval(() => {
-                    randomNeighbor.element.textContent = getRandomSymbol();
-                }, config.scrambleInterval);
-            }
-
-            activeBlocks.push(randomNeighbor);
-            currentBlock = randomNeighbor;
-
-        }
-
-
+document.addEventListener('DOMContentLoaded', () => {
+    // Initialize Lenis smooth scroll
+    const lenis = new Lenis({
+        duration: 1.2,
+        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        smooth: true,
     });
 
+    lenis.on("scroll", ScrollTrigger.update);
 
-    function updateHighLights() {
-        const currentTime = Date.now();
+    gsap.ticker.add((time) => {
+        lenis.raf(time * 1000);
+    });
 
-        blocks.forEach((block) => {
-            if (block.highlightEndTime > 0 && currentTime > block.highlightEndTime) {
-                block.element.classList.remove("active");
-                block.highlightEndTime = 0;
+    gsap.ticker.lagSmoothing(0);
 
-                clearInterval(block.scrambleInterval);
-                block.scrambleInterval = null;
+    // DOM Elements
+    const stickySection = document.querySelector('.sticky');
+    const logo = document.querySelector('.logo');
+    const header1 = document.querySelector('.header-1');
+    const header2 = document.querySelector('.header-2');
 
-                if (!block.isEmpty) {
-                    block.element.textContent = getRandomSymbol();
+    // Select ALL faces of ALL cubes for multi-image mapping
+    const allCubeFaces = document.querySelectorAll('.cube > div');
+
+    const stickyHeight = window.innerHeight * 5;
+
+    // Image Setup - Multi-Image Mapping
+    const availableImages = [
+        './e-ac-1.jpg',
+        './e-ac-3.jpg',
+        './e-ac-4.jpg',
+        './landa2.jpg',
+        './mexico-b.jpg',
+        './mexico-ex.jpg'
+    ];
+
+    // Assign a unique image to EVERY face
+    let imageCounter = 0;
+    allCubeFaces.forEach((face) => {
+        const img = document.createElement('img');
+        // Cycle through images for variety
+        img.src = availableImages[imageCounter % availableImages.length];
+        img.alt = `Cube Face Image ${imageCounter + 1}`;
+        face.appendChild(img);
+        imageCounter++;
+    });
+
+    // Interpolation Helper
+    const interpolate = (start, end, progress) => {
+        return start + (end - start) * progress;
+    };
+
+    // Animation Data
+    // Final rotations must be multiples of 90 to show "one dimension" (flat face)
+    const cubesData = {
+        "cube-1": {
+            final: { top: 25, left: 25, rotateX: 0, rotateY: 0, rotateZ: 0, z: 0 }
+        },
+        "cube-2": {
+            final: { top: 25, left: 75, rotateX: 0, rotateY: 0, rotateZ: 0, z: 0 }
+        },
+        "cube-3": {
+            final: { top: 50, left: 15, rotateX: 0, rotateY: 0, rotateZ: 0, z: 0 }
+        },
+        "cube-4": {
+            final: { top: 50, left: 85, rotateX: 0, rotateY: 0, rotateZ: 0, z: 0 }
+        },
+        "cube-5": {
+            final: { top: 75, left: 25, rotateX: 0, rotateY: 0, rotateZ: 0, z: 0 }
+        },
+        "cube-6": {
+            final: { top: 75, left: 75, rotateX: 0, rotateY: 0, rotateZ: 0, z: 0 }
+        }
+    };
+
+    // Main Scroll Animation
+    ScrollTrigger.create({
+        trigger: stickySection,
+        start: 'top top',
+        end: `+=${stickyHeight}`,
+        scrub: 1,
+        pin: true,
+        pinSpacing: true,
+
+        onUpdate: (self) => {
+            const progress = self.progress;
+
+            // Phase 1: Logo Animation (0% - 100%)
+            // Logo moves UP from center to top position as a SOLID unit
+            const logoMoveProgress = Math.min(progress * 2, 1);
+            const currentLogoTop = interpolate(35, 25, logoMoveProgress); // Move from 35% to 25% top
+            const currentLogoScale = interpolate(1, 0.7, logoMoveProgress);
+
+            logo.style.top = `${currentLogoTop}%`;
+            logo.style.transform = `translate(-50%, -50%) scale(${currentLogoScale})`;
+            logo.style.opacity = 1;
+            // No particle scattering - blocks stay in place
+
+
+            // Phase 2: Header 1 Fade Out (0% - 20%)
+            const header1Progress = Math.min(progress * 5, 1);
+            header1.style.opacity = 1 - header1Progress;
+            header1.style.filter = `blur(${header1Progress * 10}px)`;
+            header1.style.transform = `translate(-50%, -50%) scale(${1 + header1Progress})`;
+
+            // Phase 3: Cubes Entry & Rotation (10% - 100%)
+            const cubeProgress = Math.max(0, (progress - 0.1) / 0.9);
+
+            const easedCubeProgress = cubeProgress < 0.5
+                ? 2 * cubeProgress * cubeProgress
+                : 1 - Math.pow(-2 * cubeProgress + 2, 2) / 2;
+
+            Object.entries(cubesData).forEach(([cubeClass, data]) => {
+                const cube = document.querySelector(`.${cubeClass}`);
+                const { final } = data;
+
+                // Start from Center (50, 50)
+                const startTop = 50;
+                const startLeft = 50;
+                const startZ = -1000;
+
+                const top = interpolate(startTop, final.top, easedCubeProgress);
+                const left = interpolate(startLeft, final.left, easedCubeProgress);
+
+                // Rotation Logic
+                let rotateX, rotateY, rotateZ;
+
+                if (cubeClass === 'cube-5' || cubeClass === 'cube-6') {
+                    // Bottom cubes rotate 720deg (2 spins) and land on 0
+                    rotateX = interpolate(720, 0, easedCubeProgress);
+                    rotateY = interpolate(720, 0, easedCubeProgress);
+                    rotateZ = interpolate(0, 0, easedCubeProgress);
+                } else {
+                    // Other cubes rotate 360deg and land on 0
+                    rotateX = interpolate(360, 0, easedCubeProgress);
+                    rotateY = interpolate(360, 0, easedCubeProgress);
+                    rotateZ = interpolate(45, 0, easedCubeProgress);
                 }
-            }
-        });
 
-        requestAnimationFrame(updateHighLights);
+                const z = interpolate(startZ, final.z, easedCubeProgress);
 
-    }
+                const scale = Math.min(cubeProgress * 1.5, 1);
+                const opacity = Math.min(cubeProgress * 3, 1);
 
-    updateHighLights();
-}
+                cube.style.top = `${top}%`;
+                cube.style.left = `${left}%`;
+                cube.style.transform = `translate(-50%, -50%) translateZ(${z}px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) rotateZ(${rotateZ}deg) scale(${scale})`;
+                cube.style.opacity = opacity;
+            });
 
+            // Phase 4: Header 2 Fade In (60% - 100%)
+            const header2Start = 0.6;
+            const header2Progress = Math.max(0, (progress - header2Start) / (1 - header2Start));
 
-
-document.addEventListener("DOMContentLoaded", () => {
-    document.querySelectorAll(".hover-img").forEach((element) => {
-        initGridOverlay(element);
-    })
-})
+            header2.style.opacity = header2Progress;
+            header2.style.filter = `blur(${(1 - header2Progress) * 10}px)`;
+            header2.style.top = '60%';
+            header2.style.transform = `translate(-50%, -50%) scale(${0.8 + (header2Progress * 0.2)})`;
+        }
+    });
+});
