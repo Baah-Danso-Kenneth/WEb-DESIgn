@@ -1,13 +1,93 @@
+:root {
+    --base-100: #fff;
+    --base-200: #d1d9b8;
+    --base-300: #0f0f0f;
+}
+
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
-html,
 body {
-    width: 100vw;
-    height: 600vh;
-    font-family: "Notch Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif
 }
 
+img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+p {
+    text-transform: uppercase;
+    font-weight: 500;
+}
+
+.hero {
+    position: relative;
+    width: 100%;
+    height: 100svh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+
+}
+
+.hero-bg {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    transform: scale(1.25);
+    will-change: transform;
+}
+
+.hero-copy p {
+    color: var(--base-100);
+}
+
+.hero-copy p .word {
+    position: relative;
+    will-change: transform;
+    transform: translateY(100%);
+}
+
+.loader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100svh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--base-200);
+    color: var(--base-300);
+    will-change: opacity;
+    z-index: 2;
+}
+
+
+.loader .counter {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.loader svg {
+    width: 85%;
+    height: 85%;
+}
+
+.loader svg path {
+    fill: none
+}
+
+.loader svg .orbit-text {
+    fill: var(--base-300);
+    text-transform: uppercase;
+    font-size: 2.7rem;
+    font-weight: 500;
+}
