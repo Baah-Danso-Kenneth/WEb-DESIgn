@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 3, "column": 0}, "map": {"version":3,"sources":[],"names":[],"mappings":"","debugId":null}},
+    {"offset": {"line": 15, "column": 0}, "map": {"version":3,"sources":["file:///home/gee/bread/webDesign/WEb-DESIgn/Scroll_Animations/drift_card/src/app/page.tsx"],"sourcesContent":["import Image from \"next/image\";\n\nexport default function Home() {\n  return (\n    <>\n    <section className=\"intro\">\n       <h1>The Foundations</h1>\n    </section>\n    <StickyCard/>\n\n    <section className=\"outro\">\n      <h1> Ends in Forms</h1>\n    </section>\n    </>\n  );\n}\n"],"names":[],"mappings":";;;;;;AAEe,SAAS;IACtB,qBACE;;0BACA,wTAAC;gBAAQ,WAAU;0BAChB,cAAA,wTAAC;8BAAG;;;;;;;;;;;0BAEP,wTAAC;;;;;0BAED,wTAAC;gBAAQ,WAAU;0BACjB,cAAA,wTAAC;8BAAG;;;;;;;;;;;;;AAIV","debugId":null}}]
+}
