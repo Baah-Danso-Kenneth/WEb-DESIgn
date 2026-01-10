@@ -1,0 +1,97 @@
+/* [project]/bread/webDesign/WEb-DESIgn/Scroll_Animations/drift_card/src/app/stickyCard.css [app-client] (css) */
+.sticky-cards {
+  background-color: var(--bd);
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.sticky-card {
+  background-color: var(--fd);
+  width: 100%;
+  height: 100%;
+  color: var(--bg);
+  will-change: transform;
+  gap: 3rem;
+  padding: 1.5rem;
+  display: flex;
+  position: relative;
+}
+
+.sticky-card:after {
+  content: "";
+  width: 100%;
+  height: 100%;
+  opacity: var(--after-opacity, 0);
+  pointer-events: none;
+  z-index: 2;
+  background-color: rgba(0, 0, 0, .5);
+  transition: opacity .1s;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.sticky-card-index {
+  flex: 2;
+}
+
+.sticky-card-content {
+  flex: 4;
+  padding-top: 1.5rem;
+}
+
+.sticky-card-content-wrapper {
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 75%;
+  display: flex;
+}
+
+.sticky-card-header {
+  width: 75%;
+}
+
+.sticky-card-img img {
+  aspect-ratio: 5 / 3;
+}
+
+.sticky-card-copy {
+  gap: 1.5rem;
+  display: flex;
+}
+
+.sticky-card-copy-title {
+  flex: 2;
+}
+
+.sticky-card-copy-description {
+  flex: 4;
+}
+
+.sticky-card-title p {
+  text-transform: uppercase;
+  font-weight: 650;
+}
+
+@media (max-width: 1000px) {
+  .sticky-card {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .sticky-card-content-wrapper {
+    width: 100%;
+  }
+
+  .sticky-card-copy {
+    flex-direction: column;
+    gap: .5rem;
+  }
+
+  .sticky-card-index {
+    flex: 1;
+  }
+}
+
+/*# sourceMappingURL=36a12_webDesign_WEb-DESIgn_Scroll_Animations_drift_card_src_app_stickyCard_04ead35c.css.map*/

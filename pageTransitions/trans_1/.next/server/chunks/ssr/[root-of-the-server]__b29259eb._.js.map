@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 3, "column": 0}, "map": {"version":3,"sources":[],"names":[],"mappings":"","debugId":null}},
+    {"offset": {"line": 15, "column": 0}, "map": {"version":3,"sources":["file:///home/gee/bread/webDesign/WEb-DESIgn/pageTransitions/trans_1/src/app/page.tsx"],"sourcesContent":["export default function Home() {\n  return (\n    <div className=\"container\">\n      <div className=\"page-header\">\n        <h1>Timeless Form</h1>\n      </div>\n    </div>\n  );\n}\n"],"names":[],"mappings":";;;;;;AAAe,SAAS;IACtB,qBACE,mTAAC;QAAI,WAAU;kBACb,cAAA,mTAAC;YAAI,WAAU;sBACb,cAAA,mTAAC;0BAAG;;;;;;;;;;;;;;;;AAIZ","debugId":null}}]
+}
